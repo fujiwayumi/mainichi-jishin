@@ -132,6 +132,67 @@ def upload_svg_as_eyecatch(svg_str: str, slug: str, auth_header: str) -> int | N
 
 
 # ===================================================
+# 🤖 AIナナ キャラクター設定
+# ===================================================
+NANA_ICON_URL  = "http://mainichi-jishin.com/wp-content/uploads/2026/04/nana.png"
+CLAUDE_API_KEY = os.environ.get("CLAUDE_API_KEY", "")
+
+NANA_SYSTEM_PROMPT = """
+あなたは「AIナナ」という地震情報アナリストです。
+まいにち地震ウォッチというブログで、地震情報をわかりやすく伝えています。
+
+【キャラクター】
+- 冷静・的確・でも最後にひとこと優しい
+- 口調：「〜です」「〜してください」。たまに「備えがあれば怖くない。」
+- 難しい言葉は使わない。生活者目線で簡潔に伝える
+- 煽らない・怖がらせない。でも必要な行動は明確に伝える
+
+【発言ルール】
+- 必ず2つのことを伝える：①今日の地震活動の総評、②防災豆知識
+- 合計100文字以内に収める
+- HTMLタグは使わない。テキストのみ
+- 絵文字は1〜2個まで
+"""
+
+def generate_nana_comment(context: str) -> str:
+    if not CLAUDE_API_KEY:
+        return ""
+    try:
+        res = requests.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "Content-Type":      "application/json",
+                "x-api-key":         CLAUDE_API_KEY,
+                "anthropic-version": "2023-06-01",
+            },
+            json={
+                "model":      "claude-haiku-4-5-20251001",
+                "max_tokens": 200,
+                "system":     NANA_SYSTEM_PROMPT,
+                "messages":   [{"role": "user", "content": context}],
+            },
+            timeout=20,
+        )
+        res.raise_for_status()
+        return res.json()["content"][0]["text"].strip()
+    except Exception as e:
+        print(f"  → ナナコメント生成エラー: {e}")
+        return ""
+
+def build_nana_balloon(comment: str) -> str:
+    if not comment:
+        return ""
+    return f'''<div class="speech-wrap sb-id-1 sbs-stn sbp-l sbis-cb cf">
+<div class="speech-person">
+<figure class="speech-icon"><img class="speech-icon-image" src="{NANA_ICON_URL}" alt="AIナナ" width="100" height="100" /></figure>
+<div class="speech-name">AIナナ</div>
+</div>
+<div class="speech-balloon">
+{comment}
+</div>
+</div>'''
+
+# ===================================================
 # 🛒 Amazonアフィリエイト設定
 # ===================================================
 AMAZON_TAG = os.environ.get("AMAZON_TAG", "your-tag-22")
@@ -535,6 +596,18 @@ def build_daily_article(
         amazon_level = "calm"
     amazon_html_block = build_amazon_html(amazon_level)
 
+    # ── ナナのコメント生成 ──
+    if total_count == 0 and not overseas:
+        nana_context = "本日は国内外ともに目立った地震がありませんでした。平穏な日の防災豆知識をひとこと伝えてください。"
+    else:
+        max_info = f"最大{SHINDO_LABEL.get(str(max_quake.get('max_shindo','')), '不明')} M{max_quake.get('magnitude','-')}" if max_quake else ""
+        nana_context = (
+            f"本日の地震まとめ：国内{total_count}件、海外M4以上{len(overseas)}件。"
+            f"{max_info}。今日の地震活動の総評と防災豆知識をひとこと伝えてください。"
+        )
+    nana_comment  = generate_nana_comment(nana_context)
+    nana_balloon  = build_nana_balloon(nana_comment)
+
     # ── リード文（地震ゼロの日は平穏メッセージ）──
     if total_count == 0 and not overseas:
         lead = (
@@ -553,6 +626,7 @@ def build_daily_article(
         f'{domestic_html}\n\n'
         f'{overseas_html}\n\n'
         f'{news_html}\n\n'
+        f'{nana_balloon}\n\n'
         f'{amazon_html_block}\n\n'
         f'<h2>防災リンク</h2>\n'
         f'<ul>\n'

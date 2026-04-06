@@ -58,6 +58,72 @@ SHINDO_ALERT = {
 }
 
 
+# ===================================================
+# 🤖 AIナナ キャラクター設定
+# ===================================================
+NANA_ICON_URL = "http://mainichi-jishin.com/wp-content/uploads/2026/04/nana.png"
+CLAUDE_API_KEY = os.environ.get("CLAUDE_API_KEY", "")
+
+NANA_SYSTEM_PROMPT = """
+あなたは「AIナナ」という地震情報アナリストです。
+まいにち地震ウォッチというブログで、地震情報をわかりやすく伝えています。
+
+【キャラクター】
+- 冷静・的確・でも最後にひとこと優しい
+- 口調：「〜です」「〜してください」。たまに「備えがあれば怖くない。」
+- 難しい言葉は使わない。生活者目線で簡潔に伝える
+- 煽らない・怖がらせない。でも必要な行動は明確に伝える
+
+【発言ルール】
+- 必ず2つのことを伝える：①今すぐやるべき行動、②防災豆知識
+- 合計100文字以内に収める
+- 「AIナナです」などの自己紹介は不要。いきなり本題から
+- 絵文字は1〜2個まで
+- HTMLタグは使わない。テキストのみ
+"""
+
+
+def generate_nana_comment(context: str) -> str:
+    """Claude Haiku APIでナナのコメントを生成"""
+    if not CLAUDE_API_KEY:
+        return ""
+    try:
+        res = requests.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "Content-Type":      "application/json",
+                "x-api-key":         CLAUDE_API_KEY,
+                "anthropic-version": "2023-06-01",
+            },
+            json={
+                "model":      "claude-haiku-4-5-20251001",
+                "max_tokens": 200,
+                "system":     NANA_SYSTEM_PROMPT,
+                "messages":   [{"role": "user", "content": context}],
+            },
+            timeout=20,
+        )
+        res.raise_for_status()
+        return res.json()["content"][0]["text"].strip()
+    except Exception as e:
+        print(f"  → ナナコメント生成エラー: {e}")
+        return ""
+
+
+def build_nana_balloon(comment: str) -> str:
+    """ナナの吹き出しHTMLを生成（Cocoon互換）"""
+    if not comment:
+        return ""
+    return f'''<div class="speech-wrap sb-id-1 sbs-stn sbp-l sbis-cb cf">
+<div class="speech-person">
+<figure class="speech-icon"><img class="speech-icon-image" src="{NANA_ICON_URL}" alt="AIナナ" width="100" height="100" /></figure>
+<div class="speech-name">AIナナ</div>
+</div>
+<div class="speech-balloon">
+{comment}
+</div>
+</div>'''
+
 
 # ===================================================
 # 🎨 アイキャッチSVG自動生成
@@ -672,6 +738,19 @@ def build_domestic_article(quake: dict) -> dict:
     title   = f"【地震速報】{place} 最大{shindo_txt} M{mag}（{time_display}）"
     excerpt = f"{time_display}頃、{place}で{shindo_txt}（M{mag}、深さ{depth_str}）の地震が発生しました。"
 
+    # ナナのコメント生成
+    nana_context = (
+        f"地震速報：{place}で最大{shindo_txt}（M{mag}、深さ{depth_str}）の地震が発生しました。"
+        f"今すぐやるべき行動と防災豆知識をひとこと伝えてください。"
+    )
+    nana_comment = generate_nana_comment(nana_context)
+    nana_balloon = build_nana_balloon(nana_comment)
+
+    # Amazon商品レベルを震度で決定
+    shindo_num_for_amazon = {"6-": 6, "6+": 6, "7": 7, "5-": 5, "5+": 5}.get(shindo, 4)
+    amazon_level = "large" if shindo_num_for_amazon >= 6 else "medium"
+    amazon_html  = build_amazon_html(amazon_level)
+
     content = f"""<p>{icon} <strong>{time_display}頃</strong>、<strong>{place}</strong>で地震が発生しました。</p>
 
 <table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:15px;">
@@ -721,6 +800,8 @@ def build_domestic_article(quake: dict) -> dict:
   <li>✅ 携帯トイレ</li>
   <li>✅ 現金（小銭含む）</li>
 </ul>
+
+{nana_balloon}
 
 {amazon_html}
 
@@ -779,6 +860,15 @@ def build_overseas_article(quake: dict) -> dict:
     title   = f"【海外地震】{place} M{mag}（{time_str}）"
     excerpt = f"{time_str}頃、{place}でM{mag}（深さ{depth_str}）の地震が発生しました。"
 
+    # ナナのコメント生成
+    tsunami_txt = "津波情報あり。" if tsunami else ""
+    nana_context = (
+        f"海外地震速報：{place}でM{mag}（深さ{depth_str}）の地震が発生しました。{tsunami_txt}"
+        f"日本への影響と今すぐやるべき行動、防災豆知識をひとこと伝えてください。"
+    )
+    nana_comment = generate_nana_comment(nana_context)
+    nana_balloon = build_nana_balloon(nana_comment)
+
     # Amazon商品レベルをM・津波で決定
     if tsunami:
         amazon_level = "tsunami"
@@ -833,6 +923,8 @@ def build_overseas_article(quake: dict) -> dict:
   <li><a href="https://www.jma.go.jp/jma/index.html" target="_blank" rel="noopener">気象庁 地震・津波情報</a></li>
   <li><a href="https://earthquake.usgs.gov/" target="_blank" rel="noopener">USGS Earthquake Hazards Program</a></li>
 </ul>
+
+{nana_balloon}
 
 {amazon_html}
 
