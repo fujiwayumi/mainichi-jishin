@@ -17,7 +17,7 @@ from datetime import datetime, timezone, timedelta
 # ===================================================
 # ⚙️ 設定（GitHub Secretsから取得）
 # ===================================================
-WP_URL      = os.environ.get("EQ_WP_URL", "https://your-earthquake-site.com")
+WP_URL      = os.environ.get("EQ_WP_URL", "https://mainichi-jishin.com")
 WP_USER     = os.environ.get("EQ_WP_USER", "")
 WP_PASSWORD = os.environ.get("EQ_WP_PASSWORD", "")
 
@@ -61,7 +61,7 @@ SHINDO_ALERT = {
 # ===================================================
 # 🤖 AIナナ キャラクター設定
 # ===================================================
-NANA_ICON_URL = "http://mainichi-jishin.com/wp-content/uploads/2026/04/nana.png"
+NANA_ICON_URL = "https://mainichi-jishin.com/wp-content/uploads/2026/04/nana.png"
 CLAUDE_API_KEY = os.environ.get("CLAUDE_API_KEY", "")
 
 NANA_SYSTEM_PROMPT = """
