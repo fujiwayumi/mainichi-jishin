@@ -21,7 +21,7 @@ WP_URL      = os.environ.get("EQ_WP_URL", "https://your-earthquake-site.com")
 WP_USER     = os.environ.get("EQ_WP_USER", "")
 WP_PASSWORD = os.environ.get("EQ_WP_PASSWORD", "")
 
-CATEGORY_DAILY = 3  # 日次まとめカテゴリ
+CATEGORY_DAILY = 4  # 日次まとめカテゴリ
 
 SHINDO_LABEL = {
     "1": "震度1", "2": "震度2", "3": "震度3",

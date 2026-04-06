@@ -26,8 +26,8 @@ DOMESTIC_SHINDO_MIN = 4      # 国内：震度4以上
 OVERSEAS_MAG_MIN    = 5.0    # 海外：M5.0以上
 
 # カテゴリID（WordPressで事前に作成しておく）
-CATEGORY_DOMESTIC = 1   # 国内地震
-CATEGORY_OVERSEAS = 2   # 海外地震
+CATEGORY_DOMESTIC = 2   # 国内地震
+CATEGORY_OVERSEAS = 3   # 海外地震
 
 # メモリファイル
 MEMORY_FILE = "earthquake_memory.json"
