@@ -31,6 +31,107 @@ SHINDO_LABEL = {
     "7": "震度7",
 }
 # ===================================================
+# 🎨 アイキャッチSVG自動生成
+# ===================================================
+
+SITE_NAME    = "まいにち地震ウォッチ"
+SITE_TAGLINE = "日本の揺れを、毎日記録する。"
+
+EYECATCH_COLORS = {
+    "7":    {"bg": "#7B1FA2", "accent": "#CE93D8"},
+    "6+":   {"bg": "#B71C1C", "accent": "#EF9A9A"},
+    "6-":   {"bg": "#C62828", "accent": "#FFAB91"},
+    "5+":   {"bg": "#E64A19", "accent": "#FFCCBC"},
+    "5-":   {"bg": "#F57C00", "accent": "#FFE0B2"},
+    "4":    {"bg": "#F9A825", "accent": "#FFF9C4"},
+    "calm": {"bg": "#2E7D32", "accent": "#C8E6C9"},
+    "default": {"bg": "#37474F", "accent": "#CFD8DC"},
+}
+
+def _esc(text: str) -> str:
+    return (str(text)
+            .replace("&", "&amp;").replace("<", "&lt;")
+            .replace(">", "&gt;").replace('"', "&quot;"))
+
+def generate_eyecatch_svg_daily(
+    total_domestic: int, total_overseas: int,
+    max_shindo: str = "", date_str: str = ""
+) -> str:
+    if max_shindo in ("6-", "6+", "7"):
+        c = EYECATCH_COLORS.get(max_shindo, EYECATCH_COLORS["6-"])
+    elif max_shindo in ("5-", "5+"):
+        c = EYECATCH_COLORS.get(max_shindo, EYECATCH_COLORS["5-"])
+    elif max_shindo == "4":
+        c = EYECATCH_COLORS["4"]
+    elif total_domestic == 0 and total_overseas == 0:
+        c = EYECATCH_COLORS["calm"]
+    else:
+        c = EYECATCH_COLORS["default"]
+
+    bg, accent = c["bg"], c["accent"]
+    W, H = 1200, 630
+    date_esc = _esc(date_str)
+
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="{bg}"/>
+      <stop offset="100%" stop-color="{bg}CC"/>
+    </linearGradient>
+  </defs>
+  <rect width="{W}" height="{H}" fill="url(#bg)"/>
+  <circle cx="900" cy="500" r="300" fill="white" fill-opacity="0.04"/>
+  <rect x="0" y="0" width="{W}" height="72" fill="#00000033"/>
+  <text x="40" y="47" font-family="sans-serif" font-size="26" font-weight="bold"
+        fill="white" opacity="0.9">🌏 {_esc(SITE_NAME)}</text>
+  <text x="40" y="160" font-family="sans-serif" font-size="56" font-weight="bold"
+        fill="white">地震まとめ</text>
+  <text x="40" y="220" font-family="sans-serif" font-size="36"
+        fill="white" opacity="0.8">{date_esc}</text>
+  <line x1="40" y1="250" x2="{W-40}" y2="250" stroke="white" stroke-width="1" opacity="0.3"/>
+  <text x="40" y="340" font-family="sans-serif" font-size="36"
+        fill="{accent}" opacity="0.9">🇯🇵 国内有感地震</text>
+  <text x="40" y="450" font-family="sans-serif" font-size="130" font-weight="bold"
+        fill="white">{total_domestic}</text>
+  <text x="210" y="450" font-family="sans-serif" font-size="52"
+        fill="white" opacity="0.8">件</text>
+  <text x="600" y="340" font-family="sans-serif" font-size="36"
+        fill="{accent}" opacity="0.9">🌏 海外M4以上</text>
+  <text x="600" y="450" font-family="sans-serif" font-size="130" font-weight="bold"
+        fill="white">{total_overseas}</text>
+  <text x="770" y="450" font-family="sans-serif" font-size="52"
+        fill="white" opacity="0.8">件</text>
+  <rect x="0" y="{H-64}" width="{W}" height="64" fill="#00000044"/>
+  <text x="40" y="{H-22}" font-family="sans-serif" font-size="22"
+        fill="white" opacity="0.7">{_esc(SITE_TAGLINE)}</text>
+</svg>'''
+
+def upload_svg_as_eyecatch(svg_str: str, slug: str, auth_header: str) -> int | None:
+    filename  = f"eyecatch-{slug}.svg"
+    svg_bytes = svg_str.encode("utf-8")
+    try:
+        res = requests.post(
+            f"{WP_URL}/wp-json/wp/v2/media",
+            headers={
+                "Authorization":       auth_header,
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Type":        "image/svg+xml",
+            },
+            data=svg_bytes,
+            timeout=30,
+        )
+        if res.status_code in [200, 201]:
+            media_id = res.json().get("id")
+            print(f"  → SVGアイキャッチアップロード成功: ID={media_id}")
+            return media_id
+        print(f"  → SVGアップロード失敗({res.status_code})")
+        return None
+    except Exception as e:
+        print(f"  → SVGアップロードエラー: {e}")
+        return None
+
+
+# ===================================================
 # 🛒 Amazonアフィリエイト設定
 # ===================================================
 AMAZON_TAG = os.environ.get("AMAZON_TAG", "your-tag-22")
@@ -473,13 +574,23 @@ def build_daily_article(
 
     excerpt = f"{date_str}の地震活動まとめ。国内有感地震{total_count}件、海外M4以上{len(overseas)}件。"
 
+    # アイキャッチSVG生成
+    max_shindo_str = str(max_quake.get("max_shindo", "")) if max_quake else ""
+    eyecatch_svg = generate_eyecatch_svg_daily(
+        total_domestic=total_count,
+        total_overseas=len(overseas),
+        max_shindo=max_shindo_str,
+        date_str=date_str,
+    )
+
     return {
-        "title":    title,
-        "slug":     f"eq-daily-{date_slug}",
-        "content":  content,
-        "excerpt":  excerpt,
-        "tags":     ["地震まとめ", "地震", date_str],
-        "category": CATEGORY_DAILY,
+        "title":        title,
+        "slug":         f"eq-daily-{date_slug}",
+        "content":      content,
+        "excerpt":      excerpt,
+        "tags":         ["地震まとめ", "地震", date_str],
+        "category":     CATEGORY_DAILY,
+        "eyecatch_svg": eyecatch_svg,
     }
 
 
@@ -495,6 +606,16 @@ def post_to_wordpress(article: dict) -> dict | None:
         "Content-Type":  "application/json",
     }
     tag_ids = get_or_create_tags(article.get("tags", []), headers)
+
+    # ── アイキャッチSVGアップロード ──
+    eyecatch_id = None
+    try:
+        svg_str = article.get("eyecatch_svg", "")
+        if svg_str:
+            eyecatch_id = upload_svg_as_eyecatch(svg_str, article["slug"], auth)
+    except Exception as e:
+        print(f"  → アイキャッチスキップ: {e}")
+
     payload = {
         "title":      article["title"],
         "slug":       article["slug"],
@@ -504,6 +625,8 @@ def post_to_wordpress(article: dict) -> dict | None:
         "categories": [article.get("category", 1)],
         "tags":       tag_ids,
     }
+    if eyecatch_id:
+        payload["featured_media"] = eyecatch_id
     try:
         res = requests.post(
             f"{WP_URL}/wp-json/wp/v2/posts",

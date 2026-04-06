@@ -60,6 +60,283 @@ SHINDO_ALERT = {
 
 
 # ===================================================
+# 🎨 アイキャッチSVG自動生成
+# ===================================================
+
+# 震度・種別ごとの配色
+EYECATCH_COLORS = {
+    "7":    {"bg": "#7B1FA2", "accent": "#CE93D8", "label": "震度7"},
+    "6+":   {"bg": "#B71C1C", "accent": "#EF9A9A", "label": "震度6強"},
+    "6-":   {"bg": "#C62828", "accent": "#FFAB91", "label": "震度6弱"},
+    "5+":   {"bg": "#E64A19", "accent": "#FFCCBC", "label": "震度5強"},
+    "5-":   {"bg": "#F57C00", "accent": "#FFE0B2", "label": "震度5弱"},
+    "4":    {"bg": "#F9A825", "accent": "#FFF9C4", "label": "震度4"},
+    "overseas_large": {"bg": "#1565C0", "accent": "#BBDEFB", "label": "海外地震"},
+    "overseas_mid":   {"bg": "#1976D2", "accent": "#BBDEFB", "label": "海外地震"},
+    "calm": {"bg": "#2E7D32", "accent": "#C8E6C9", "label": "平穏"},
+}
+
+SITE_NAME    = "まいにち地震ウォッチ"
+SITE_TAGLINE = "日本の揺れを、毎日記録する。"
+
+
+def _esc(text: str) -> str:
+    """SVG用にXMLエスケープ"""
+    return (str(text)
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace('"', "&quot;"))
+
+
+def generate_eyecatch_svg_domestic(
+    shindo: str, place: str, magnitude, origin_time: str
+) -> str:
+    """国内地震用アイキャッチSVGを生成"""
+    c       = EYECATCH_COLORS.get(str(shindo), EYECATCH_COLORS["4"])
+    bg      = c["bg"]
+    accent  = c["accent"]
+    label   = c["label"]
+    mag_str = f"M{magnitude}"
+
+    # 時刻を短縮表示
+    try:
+        if " " in origin_time:
+            t_disp = origin_time.split(" ")[1][:5]
+        elif "T" in origin_time:
+            t_disp = origin_time.split("T")[1][:5]
+        else:
+            t_disp = origin_time[:5]
+        date_disp = origin_time[:10].replace("/", ".")
+    except Exception:
+        t_disp    = ""
+        date_disp = ""
+
+    place_esc    = _esc(place[:18])   # 長すぎる地名は切る
+    time_display = _esc(f"{date_disp}  {t_disp}")
+
+    W, H = 1200, 630
+
+    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="{bg}"/>
+      <stop offset="100%" stop-color="{bg}CC"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="{W}" height="{H}" fill="url(#bg)"/>
+  <!-- 右下装飾円 -->
+  <circle cx="{W}" cy="{H}" r="340" fill="white" fill-opacity="0.05"/>
+  <circle cx="{W}" cy="{H}" r="220" fill="white" fill-opacity="0.05"/>
+
+  <!-- ヘッダーバー -->
+  <rect x="0" y="0" width="{W}" height="72" fill="#00000033"/>
+  <text x="40" y="47" font-family="sans-serif" font-size="26" font-weight="bold"
+        fill="white" opacity="0.9">🌏 {_esc(SITE_NAME)}</text>
+
+  <!-- 速報ラベル -->
+  <rect x="40" y="110" width="180" height="52" rx="6" fill="white" fill-opacity="0.2"/>
+  <text x="130" y="146" font-family="sans-serif" font-size="28" font-weight="bold"
+        fill="white" text-anchor="middle">地震速報</text>
+
+  <!-- 震度（大） -->
+  <text x="40" y="310" font-family="sans-serif" font-size="52" fill="{accent}" font-weight="bold"
+        opacity="0.6">最大震度</text>
+  <text x="40" y="440" font-family="sans-serif" font-size="160" font-weight="bold"
+        fill="white">{_esc(label.replace("震度",""))}</text>
+
+  <!-- 縦区切り -->
+  <line x1="480" y1="180" x2="480" y2="500" stroke="white" stroke-width="2" opacity="0.3"/>
+
+  <!-- 右側：マグニチュード・地名・日時 -->
+  <text x="540" y="260" font-family="sans-serif" font-size="44" fill="{accent}"
+        font-weight="bold" opacity="0.8">マグニチュード</text>
+  <text x="540" y="360" font-family="sans-serif" font-size="110" font-weight="bold"
+        fill="white">{_esc(mag_str)}</text>
+
+  <text x="540" y="440" font-family="sans-serif" font-size="48" font-weight="bold"
+        fill="white">{place_esc}</text>
+  <text x="540" y="495" font-family="sans-serif" font-size="32" fill="white"
+        opacity="0.75">{time_display}</text>
+
+  <!-- フッター -->
+  <rect x="0" y="{H - 64}" width="{W}" height="64" fill="#00000044"/>
+  <text x="40" y="{H - 22}" font-family="sans-serif" font-size="22"
+        fill="white" opacity="0.7">{_esc(SITE_TAGLINE)}</text>
+</svg>'''
+    return svg
+
+
+def generate_eyecatch_svg_overseas(
+    magnitude: float, place: str, origin_time: str, tsunami: int = 0
+) -> str:
+    """海外地震用アイキャッチSVGを生成"""
+    if magnitude >= 7.0:
+        c = EYECATCH_COLORS["overseas_large"]
+    else:
+        c = EYECATCH_COLORS["overseas_mid"]
+
+    bg     = c["bg"]
+    accent = c["accent"]
+    place_esc  = _esc(place[:28])
+    time_esc   = _esc(origin_time)
+    mag_str    = f"M{magnitude}"
+    tsunami_el = ''
+    if tsunami:
+        tsunami_el = f'''
+  <rect x="40" y="510" width="320" height="56" rx="6" fill="#E53935" fill-opacity="0.9"/>
+  <text x="200" y="549" font-family="sans-serif" font-size="30" font-weight="bold"
+        fill="white" text-anchor="middle">🌊 津波情報あり</text>'''
+
+    W, H = 1200, 630
+    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="{bg}"/>
+      <stop offset="100%" stop-color="{bg}BB"/>
+    </linearGradient>
+  </defs>
+  <rect width="{W}" height="{H}" fill="url(#bg)"/>
+  <circle cx="{W}" cy="0" r="300" fill="white" fill-opacity="0.04"/>
+  <circle cx="{W}" cy="0" r="180" fill="white" fill-opacity="0.04"/>
+
+  <!-- ヘッダー -->
+  <rect x="0" y="0" width="{W}" height="72" fill="#00000033"/>
+  <text x="40" y="47" font-family="sans-serif" font-size="26" font-weight="bold"
+        fill="white" opacity="0.9">🌏 {_esc(SITE_NAME)}</text>
+
+  <!-- ラベル -->
+  <rect x="40" y="110" width="220" height="52" rx="6" fill="white" fill-opacity="0.2"/>
+  <text x="150" y="146" font-family="sans-serif" font-size="28" font-weight="bold"
+        fill="white" text-anchor="middle">海外地震速報</text>
+
+  <!-- M値（大） -->
+  <text x="40" y="310" font-family="sans-serif" font-size="52"
+        fill="{accent}" font-weight="bold" opacity="0.7">マグニチュード</text>
+  <text x="40" y="460" font-family="sans-serif" font-size="180" font-weight="bold"
+        fill="white">{_esc(mag_str)}</text>
+
+  <!-- 地名・日時 -->
+  <text x="700" y="320" font-family="sans-serif" font-size="42" font-weight="bold"
+        fill="white">{place_esc}</text>
+  <text x="700" y="390" font-family="sans-serif" font-size="32"
+        fill="white" opacity="0.75">{time_esc}</text>
+
+  {tsunami_el}
+
+  <!-- フッター -->
+  <rect x="0" y="{H - 64}" width="{W}" height="64" fill="#00000044"/>
+  <text x="40" y="{H - 22}" font-family="sans-serif" font-size="22"
+        fill="white" opacity="0.7">{_esc(SITE_TAGLINE)}</text>
+</svg>'''
+    return svg
+
+
+def generate_eyecatch_svg_daily(
+    total_domestic: int, total_overseas: int,
+    max_shindo: str = "", date_str: str = ""
+) -> str:
+    """日次まとめ用アイキャッチSVGを生成"""
+    if max_shindo in ("6-", "6+", "7"):
+        c = EYECATCH_COLORS.get(max_shindo, EYECATCH_COLORS["6-"])
+    elif max_shindo in ("5-", "5+"):
+        c = EYECATCH_COLORS.get(max_shindo, EYECATCH_COLORS["5-"])
+    elif max_shindo == "4":
+        c = EYECATCH_COLORS["4"]
+    elif total_domestic == 0 and total_overseas == 0:
+        c = EYECATCH_COLORS["calm"]
+    else:
+        c = {"bg": "#37474F", "accent": "#CFD8DC", "label": "まとめ"}
+
+    bg     = c["bg"]
+    accent = c["accent"]
+    W, H   = 1200, 630
+    date_esc = _esc(date_str)
+
+    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="{bg}"/>
+      <stop offset="100%" stop-color="{bg}CC"/>
+    </linearGradient>
+  </defs>
+  <rect width="{W}" height="{H}" fill="url(#bg)"/>
+  <circle cx="900" cy="500" r="300" fill="white" fill-opacity="0.04"/>
+
+  <!-- ヘッダー -->
+  <rect x="0" y="0" width="{W}" height="72" fill="#00000033"/>
+  <text x="40" y="47" font-family="sans-serif" font-size="26" font-weight="bold"
+        fill="white" opacity="0.9">🌏 {_esc(SITE_NAME)}</text>
+
+  <!-- タイトル -->
+  <text x="40" y="160" font-family="sans-serif" font-size="56" font-weight="bold"
+        fill="white">地震まとめ</text>
+  <text x="40" y="220" font-family="sans-serif" font-size="36"
+        fill="white" opacity="0.8">{date_esc}</text>
+
+  <!-- 区切り線 -->
+  <line x1="40" y1="250" x2="{W - 40}" y2="250" stroke="white" stroke-width="1" opacity="0.3"/>
+
+  <!-- 国内カウント -->
+  <text x="40" y="340" font-family="sans-serif" font-size="36"
+        fill="{accent}" opacity="0.9">🇯🇵 国内有感地震</text>
+  <text x="40" y="450" font-family="sans-serif" font-size="130" font-weight="bold"
+        fill="white">{total_domestic}</text>
+  <text x="210" y="450" font-family="sans-serif" font-size="52"
+        fill="white" opacity="0.8">件</text>
+
+  <!-- 海外カウント -->
+  <text x="600" y="340" font-family="sans-serif" font-size="36"
+        fill="{accent}" opacity="0.9">🌏 海外M4以上</text>
+  <text x="600" y="450" font-family="sans-serif" font-size="130" font-weight="bold"
+        fill="white">{total_overseas}</text>
+  <text x="770" y="450" font-family="sans-serif" font-size="52"
+        fill="white" opacity="0.8">件</text>
+
+  <!-- フッター -->
+  <rect x="0" y="{H - 64}" width="{W}" height="64" fill="#00000044"/>
+  <text x="40" y="{H - 22}" font-family="sans-serif" font-size="22"
+        fill="white" opacity="0.7">{_esc(SITE_TAGLINE)}</text>
+</svg>'''
+    return svg
+
+
+def upload_svg_as_eyecatch(svg_str: str, slug: str, auth_header: str) -> int | None:
+    """SVGをPNG変換してWordPressにアップロード、メディアIDを返す"""
+    import base64 as _b64
+
+    # SVGをBase64エンコードしてdata URIとして扱う
+    # WordPressはSVG直接アップロードを拒否する場合が多いため
+    # cairosvg or svglib が使えない環境では SVG を直接 image/svg+xml で試みる
+    filename    = f"eyecatch-{slug}.svg"
+    svg_bytes   = svg_str.encode("utf-8")
+
+    try:
+        res = requests.post(
+            f"{WP_URL}/wp-json/wp/v2/media",
+            headers={
+                "Authorization":       auth_header,
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Type":        "image/svg+xml",
+            },
+            data=svg_bytes,
+            timeout=30,
+        )
+        if res.status_code in [200, 201]:
+            media_id = res.json().get("id")
+            print(f"  → SVGアイキャッチアップロード成功: ID={media_id}")
+            return media_id
+        else:
+            print(f"  → SVGアップロード失敗({res.status_code}): {res.text[:200]}")
+            return None
+    except Exception as e:
+        print(f"  → SVGアップロードエラー: {e}")
+        return None
+
+
+# ===================================================
 # 🛒 Amazonアフィリエイト設定
 # ===================================================
 AMAZON_TAG = os.environ.get("AMAZON_TAG", "your-tag-22")
@@ -455,13 +732,19 @@ def build_domestic_article(quake: dict) -> dict:
     jst_now = datetime.now(timezone(timedelta(hours=9)))
     slug = f"eq-{jst_now.strftime('%Y%m%d-%H%M')}-domestic"
 
+    eyecatch_svg = generate_eyecatch_svg_domestic(
+        shindo=shindo, place=place,
+        magnitude=mag, origin_time=time_display,
+    )
+
     return {
-        "title":    title,
-        "slug":     slug,
-        "content":  content,
-        "excerpt":  excerpt,
-        "tags":     ["地震速報", "地震", place, shindo_txt],
-        "category": CATEGORY_DOMESTIC,
+        "title":        title,
+        "slug":         slug,
+        "content":      content,
+        "excerpt":      excerpt,
+        "tags":         ["地震速報", "地震", place, shindo_txt],
+        "category":     CATEGORY_DOMESTIC,
+        "eyecatch_svg": eyecatch_svg,
     }
 
 
@@ -560,13 +843,19 @@ def build_overseas_article(quake: dict) -> dict:
     jst_now = datetime.now(timezone(timedelta(hours=9)))
     slug = f"eq-{jst_now.strftime('%Y%m%d-%H%M')}-overseas"
 
+    eyecatch_svg = generate_eyecatch_svg_overseas(
+        magnitude=float(mag), place=place,
+        origin_time=time_str, tsunami=tsunami,
+    )
+
     return {
-        "title":    title,
-        "slug":     slug,
-        "content":  content,
-        "excerpt":  excerpt,
-        "tags":     ["地震速報", "海外地震", "M5以上"],
-        "category": CATEGORY_OVERSEAS,
+        "title":        title,
+        "slug":         slug,
+        "content":      content,
+        "excerpt":      excerpt,
+        "tags":         ["地震速報", "海外地震", "M5以上"],
+        "category":     CATEGORY_OVERSEAS,
+        "eyecatch_svg": eyecatch_svg,
     }
 
 
@@ -586,6 +875,17 @@ def post_to_wordpress(article: dict) -> dict | None:
     # タグID取得 or 作成
     tag_ids = get_or_create_tags(article.get("tags", []), headers)
 
+    # ── アイキャッチSVG生成・アップロード ──
+    eyecatch_id = None
+    try:
+        svg_str = article.get("eyecatch_svg", "")
+        if svg_str:
+            eyecatch_id = upload_svg_as_eyecatch(
+                svg_str, article.get("slug", "post"), auth
+            )
+    except Exception as e:
+        print(f"  → アイキャッチスキップ: {e}")
+
     payload = {
         "title":      article["title"],
         "slug":       article.get("slug", ""),
@@ -595,6 +895,8 @@ def post_to_wordpress(article: dict) -> dict | None:
         "categories": [article.get("category", 1)],
         "tags":       tag_ids,
     }
+    if eyecatch_id:
+        payload["featured_media"] = eyecatch_id
 
     try:
         res = requests.post(
