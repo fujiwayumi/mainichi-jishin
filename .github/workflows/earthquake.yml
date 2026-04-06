@@ -6,6 +6,10 @@ on:
     - cron: '30 15 * * *'    # 日次まとめ：毎日深夜0時30分 JST（= UTC 15:30）
   workflow_dispatch:          # 手動実行も可能
 
+# リポジトリへの書き込み権限を付与
+permissions:
+  contents: write
+
 jobs:
   # ──────────────────────────────────────────
   # 速報ジョブ（15分おき）
@@ -29,10 +33,11 @@ jobs:
       - name: Run earthquake alert
         run: python earthquake_alert.py
         env:
-          EQ_WP_URL:      ${{ secrets.EQ_WP_URL }}
-          EQ_WP_USER:     ${{ secrets.EQ_WP_USER }}
-          EQ_WP_PASSWORD: ${{ secrets.EQ_WP_PASSWORD }}
-          AMAZON_TAG:     ${{ secrets.AMAZON_TAG }}
+          EQ_WP_URL:       ${{ secrets.EQ_WP_URL }}
+          EQ_WP_USER:      ${{ secrets.EQ_WP_USER }}
+          EQ_WP_PASSWORD:  ${{ secrets.EQ_WP_PASSWORD }}
+          AMAZON_TAG:      ${{ secrets.AMAZON_TAG }}
+          CLAUDE_API_KEY:  ${{ secrets.CLAUDE_API_KEY }}
 
       - name: Save memory
         run: |
@@ -50,6 +55,8 @@ jobs:
     if: github.event_name == 'schedule' && contains(github.event.schedule, '30 15')
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -62,7 +69,8 @@ jobs:
       - name: Run daily summary
         run: python earthquake_daily.py
         env:
-          EQ_WP_URL:      ${{ secrets.EQ_WP_URL }}
-          EQ_WP_USER:     ${{ secrets.EQ_WP_USER }}
-          EQ_WP_PASSWORD: ${{ secrets.EQ_WP_PASSWORD }}
-          AMAZON_TAG:     ${{ secrets.AMAZON_TAG }}
+          EQ_WP_URL:       ${{ secrets.EQ_WP_URL }}
+          EQ_WP_USER:      ${{ secrets.EQ_WP_USER }}
+          EQ_WP_PASSWORD:  ${{ secrets.EQ_WP_PASSWORD }}
+          AMAZON_TAG:      ${{ secrets.AMAZON_TAG }}
+          CLAUDE_API_KEY:  ${{ secrets.CLAUDE_API_KEY }}
