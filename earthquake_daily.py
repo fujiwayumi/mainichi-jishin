@@ -17,7 +17,7 @@ from datetime import datetime, timezone, timedelta
 # ===================================================
 # ⚙️ 設定
 # ===================================================
-WP_URL      = os.environ.get("EQ_WP_URL", "https://mainichi-jishin.com")
+WP_URL      = os.environ.get("EQ_WP_URL", "https://your-earthquake-site.com")
 WP_USER     = os.environ.get("EQ_WP_USER", "")
 WP_PASSWORD = os.environ.get("EQ_WP_PASSWORD", "")
 
@@ -72,7 +72,7 @@ def generate_eyecatch_svg_daily(
     W, H = 1200, 630
     date_esc = _esc(date_str)
 
-    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="auto" viewBox="0 0 {W} {H}" style="display:block;max-width:100%;">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="{bg}"/>
@@ -134,7 +134,7 @@ def upload_svg_as_eyecatch(svg_str: str, slug: str, auth_header: str) -> int | N
 # ===================================================
 # 🤖 AIナナ キャラクター設定
 # ===================================================
-NANA_ICON_URL  = "http://mainichi-jishin.com/wp-content/uploads/2026/04/nana.png"
+NANA_ICON_URL  = "https://mainichi-jishin.com/wp-content/uploads/2026/04/nana.png"
 CLAUDE_API_KEY = os.environ.get("CLAUDE_API_KEY", "")
 
 NANA_SYSTEM_PROMPT = """
@@ -199,32 +199,32 @@ AMAZON_TAG = os.environ.get("AMAZON_TAG", "your-tag-22")
 
 AMAZON_PRODUCTS = {
     "large": [
-        ("防災セット 家族4人用 5年保存",       "bousai-set+family+4nin"),
-        ("保存水 2L 24本 5年保存",              "hozonmizu+2L+24hon"),
-        ("非常食 7日分 セット アルファ米",       "hijyoshoku+7days+set"),
-        ("避難リュック 非常用持ち出し袋",        "hinan+rucksack+hijyo"),
-        ("携帯トイレ 50回分 防災",              "keitai+toilet+bousai"),
+        ("防災セット 家族4人用 5年保存",       "防災セット+家族+4人用"),
+        ("保存水 2L 24本 5年保存",              "保存水+2L+24本"),
+        ("非常食 7日分 セット アルファ米",       "非常食+7日分+セット"),
+        ("避難リュック 非常用持ち出し袋",        "避難リュック+非常用持ち出し袋"),
+        ("携帯トイレ 50回分 防災",              "携帯トイレ+防災"),
     ],
     "medium": [
-        ("ポータブル電源 大容量 防災",           "portable+dengen+bousai"),
-        ("防災ラジオ 手回し充電 LED",            "bousai+radio+temawashi"),
-        ("懐中電灯 LED 防災 単3",               "kaichu+dento+LED+bousai"),
-        ("耐震マット 家具転倒防止",              "taishin+mat+kagu"),
-        ("救急セット 家庭用 防災",               "kyukyu+set+katei"),
+        ("ポータブル電源 大容量 防災",           "ポータブル電源+防災"),
+        ("防災ラジオ 手回し充電 LED",            "防災ラジオ+手回し充電"),
+        ("懐中電灯 LED 防災 単3",               "懐中電灯+LED+防災"),
+        ("耐震マット 家具転倒防止",              "耐震マット+家具転倒防止"),
+        ("救急セット 家庭用 防災",               "救急セット+家庭用"),
     ],
     "calm": [
-        ("非常食 5年保存 缶詰 セット",           "hijyoshoku+5nen+kanme"),
-        ("保存水 500ml 48本 防災",              "hozonmizu+500ml+48hon"),
-        ("耐震ジェル 防振マット 家具",           "taishin+gel+bousai"),
-        ("防災 窓ガラス 飛散防止フィルム",        "bousai+garasu+film"),
-        ("備蓄 ローリングストック 食品",          "bichiku+rolling+stock"),
+        ("非常食 5年保存 缶詰 セット",           "非常食+5年保存+缶詰"),
+        ("保存水 500ml 48本 防災",              "保存水+500ml+48本"),
+        ("耐震ジェル 防振マット 家具",           "耐震ジェル+防振マット"),
+        ("防災 窓ガラス 飛散防止フィルム",        "防災+窓ガラス+飛散防止フィルム"),
+        ("備蓄 ローリングストック 食品",          "備蓄+ローリングストック"),
     ],
     "tsunami": [
-        ("防災ラジオ 津波 警報 受信",            "bousai+radio+tsunami"),
-        ("ライフジャケット 防災 自動膨張",        "life+jacket+jidou"),
-        ("避難リュック 軽量 防水",               "hinan+rucksack+kerryo"),
-        ("笛 防災 ホイッスル サバイバル",         "fue+bousai+whistle"),
-        ("防水バッグ 防災 貴重品",               "boosui+bag+bousai"),
+        ("防災ラジオ 津波 警報 受信",            "防災ラジオ+津波+警報"),
+        ("ライフジャケット 防災 自動膨張",        "ライフジャケット+自動膨張"),
+        ("避難リュック 軽量 防水",               "避難リュック+軽量+防水"),
+        ("笛 防災 ホイッスル サバイバル",         "防災+ホイッスル"),
+        ("防水バッグ 防災 貴重品",               "防水バッグ+防災"),
     ],
 }
 
@@ -341,7 +341,7 @@ def fetch_today_domestic() -> list[dict]:
 
     try:
         res = requests.get(
-            "https://www.p2pquake.net/api/v2/history",
+            "https://api.p2pquake.net/v2/history",
             params={"codes": 551, "limit": 100},
             timeout=15,
         )
@@ -361,15 +361,18 @@ def fetch_today_domestic() -> list[dict]:
             if not time_str.startswith(today_str):
                 continue
 
-            max_scale = eq.get("maxScale", -1)
+            max_scale  = eq.get("maxScale", -1)
             max_shindo = shindo_map.get(max_scale, "不明")
+            # IDはtime+placeで代用（jma/quakeにはidがない）
+            place    = hypo.get("name", "不明")
+            event_id = f"jma_{time_str}_{place}".replace(" ", "_")
 
             quakes.append({
-                "id":         item.get("id", ""),
-                "place":      hypo.get("name", "不明"),
-                "magnitude":  hypo.get("magnitude", -1),
-                "max_shindo": max_shindo,
-                "depth":      hypo.get("depth", -1),
+                "id":          event_id,
+                "place":       place,
+                "magnitude":   hypo.get("magnitude", -1),
+                "max_shindo":  max_shindo,
+                "depth":       hypo.get("depth", -1),
                 "origin_time": time_str,
             })
     except Exception as e:
