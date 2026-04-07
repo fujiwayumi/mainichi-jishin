@@ -17,7 +17,7 @@ from datetime import datetime, timezone, timedelta
 # ===================================================
 # ⚙️ 設定
 # ===================================================
-WP_URL      = os.environ.get("EQ_WP_URL", "https://your-earthquake-site.com")
+WP_URL      = os.environ.get("EQ_WP_URL", "https://mainichi-jishin.com")
 WP_USER     = os.environ.get("EQ_WP_USER", "")
 WP_PASSWORD = os.environ.get("EQ_WP_PASSWORD", "")
 
