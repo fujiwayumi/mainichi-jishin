@@ -33,7 +33,7 @@ CATEGORY_OVERSEAS = 3   # 海外地震
 MEMORY_FILE = "earthquake_memory.json"
 
 # 気象庁 地震情報XML
-JMA_QUAKE_URL = "https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml"
+JMA_QUAKE_URL ="https://api.p2pquake.net/v2/history?codes=551&limit=10"
 
 # USGS API（過去1時間、M5以上）
 USGS_API_URL = (
