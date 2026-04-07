@@ -600,7 +600,7 @@ def fetch_domestic_quakes_simple() -> list[dict]:
     気象庁の地震情報JSONエンドポイント（非公式だが安定）を使う簡易版。
     公式XMLが取得できない場合のフォールバック用。
     """
-    url = "https://www.p2pquake.net/api/v2/history?codes=551&limit=10"
+    url = JMA_QUAKE_URL
     quakes = []
     try:
         res = requests.get(url, timeout=10)
