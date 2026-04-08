@@ -97,6 +97,29 @@ COUNTRY_JA = {
     "Pacific-Antarctic Ridge": "太平洋南極海嶺",
     "Pacific Ocean": "太平洋", "Indian Ocean": "インド洋",
     "Atlantic Ocean": "大西洋",
+    # 海嶺・海溝・その他
+    "Indian-Antarctic Ridge": "インド洋南極海嶺",
+    "Pacific-Antarctic Ridge": "太平洋南極海嶺",
+    "Southeast Indian Ridge": "南東インド洋海嶺",
+    "Mid-Indian Ridge": "中央インド洋海嶺",
+    "Mid-Atlantic Ridge": "中央大西洋海嶺",
+    "Reykjanes Ridge": "レイキャネス海嶺",
+    "East Pacific Rise": "東太平洋海膨",
+    "Juan de Fuca Ridge": "ファン・デ・フカ海嶺",
+    "Macquarie Island": "マッコーリー島",
+    "Prince Edward Islands": "プリンスエドワード諸島",
+    "South Sandwich Islands": "サウスサンドウィッチ諸島",
+    "South Georgia Island": "サウスジョージア島",
+    "Ascension Island": "アセンション島",
+    "Owen Fracture Zone": "オーウェン断裂帯",
+    "Carlsberg Ridge": "カールスバーグ海嶺",
+    "Scotia Sea": "スコシア海",
+    "Weddell Sea": "ウェッデル海",
+    "Ross Sea": "ロス海",
+    "Timor Sea": "ティモール海",
+    "Arafura Sea": "アラフラ海",
+    "Coral Sea": "コーラル海",
+    "Tasman Sea": "タスマン海",
 }
 
 DIRECTION_JA = {
@@ -113,39 +136,64 @@ def format_place_ja(place: str) -> str:
     if not place:
         return "不明"
 
-    # カンマで分割して国名部分を日本語化
-    # 例: "126km SSE of Ormoc, Philippines" → "フィリピン"
-    if "," in place:
-        parts     = place.split(",")
-        region    = parts[-1].strip()
-        region_ja = COUNTRY_JA.get(region, region)
-        return f"{region_ja}"
+    # 方角プレフィックス辞書（"western X" → Xだけ使う）
+    DIR_PREFIX = {
+        "northern": "北部", "southern": "南部",
+        "eastern": "東部", "western": "西部",
+        "northeastern": "北東部", "northwestern": "北西部",
+        "southeastern": "南東部", "southwestern": "南西部",
+        "central": "中部", "mid-": "中央",
+    }
 
-    # "XXX of the YYY" パターン → 場所名だけ日本語化
-    # 例: "south of the Fiji Islands" → "フィジー諸島 南方沖"
+    # ① カンマあり: "XXX, Country" → 国名だけ日本語化
+    if "," in place:
+        region    = place.split(",")[-1].strip()
+        return COUNTRY_JA.get(region, region)
+
+    # ② "XXX of [the] YYY" パターン
     m = re.match(r"(.+?)\s+of\s+(?:the\s+)?(.+)", place, re.IGNORECASE)
     if m:
-        direction_en = m.group(1).strip().title()
-        location_en  = m.group(2).strip()
-        location_ja  = COUNTRY_JA.get(location_en, location_en)
+        dir_en  = m.group(1).strip().lower()
+        loc_en  = m.group(2).strip()
+        # 不要語除去
+        loc_en  = re.sub(r"\b(region|area|ridge|zone|fracture)\b", "",
+                         loc_en, flags=re.IGNORECASE).strip()
+        loc_ja  = COUNTRY_JA.get(loc_en, loc_en)
         dir_map = {
-            "North": "北方", "South": "南方", "East": "東方", "West": "西方",
-            "Northeast": "北東方", "Northwest": "北西方",
-            "Southeast": "南東方", "Southwest": "南西方",
-            "Offshore": "沖合", "Near": "近海",
+            "north": "北方", "south": "南方",
+            "east": "東方", "west": "西方",
+            "northeast": "北東方", "northwest": "北西方",
+            "southeast": "南東方", "southwest": "南西方",
+            "offshore": "", "near": "", "vicinity": "",
         }
-        dir_ja = dir_map.get(direction_en, "")
-        return f"{location_ja}{dir_ja}沖" if dir_ja else f"{location_ja}沖"
+        dir_ja = dir_map.get(dir_en, "")
+        return f"{loc_ja}{dir_ja}沖"
 
-    # 不要語を除去してそのまま辞書変換
+    # ③ 方角プレフィックスを除去して辞書変換
+    # 例: "western Indian-Antarctic Ridge" → "Indian-Antarctic Ridge" → 辞書検索
+    place_work = place
+    for prefix in DIR_PREFIX:
+        pat = re.compile(r"^" + prefix + r"\s+", re.IGNORECASE)
+        place_work = pat.sub("", place_work).strip()
+
+    # 不要語を除去
     place_clean = re.sub(
-        r"\b(region|area|offshore|near|vicinity)\b", "",
-        place, flags=re.IGNORECASE
-    ).strip().rstrip(",").strip()
+        r"\b(region|area|ridge|zone|fracture|island|islands)\b",
+        "", place_work, flags=re.IGNORECASE
+    ).strip().rstrip(",- ").strip()
+
+    # 辞書で完全一致
     for en, ja in COUNTRY_JA.items():
-        if en in place_clean:
-            return place_clean.replace(en, ja)
-    return place_clean
+        if en.lower() == place_work.lower():
+            return ja
+
+    # 辞書で部分一致
+    for en, ja in COUNTRY_JA.items():
+        if en.lower() in place_work.lower():
+            return ja
+
+    # それでもマッチしない場合は元の文字列をそのまま返す
+    return place_work
 
 
 
