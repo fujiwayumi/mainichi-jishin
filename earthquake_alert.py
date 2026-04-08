@@ -57,6 +57,97 @@ SHINDO_ALERT = {
     "7":  "🆘",
 }
 
+# ===================================================
+# 🌏 海外地名の日本語変換
+# ===================================================
+COUNTRY_JA = {
+    "Philippines": "フィリピン", "Indonesia": "インドネシア",
+    "Japan": "日本", "China": "中国", "Taiwan": "台湾",
+    "Papua New Guinea": "パプアニューギニア",
+    "Solomon Islands": "ソロモン諸島", "Vanuatu": "バヌアツ",
+    "Fiji": "フィジー", "Tonga": "トンガ",
+    "New Zealand": "ニュージーランド", "Australia": "オーストラリア",
+    "Myanmar": "ミャンマー", "India": "インド", "Nepal": "ネパール",
+    "Afghanistan": "アフガニスタン", "Pakistan": "パキスタン",
+    "Iran": "イラン", "Turkey": "トルコ", "Turkiye": "トルコ",
+    "Russia": "ロシア", "Kazakhstan": "カザフスタン",
+    "Kyrgyzstan": "キルギス", "Tajikistan": "タジキスタン",
+    "Chile": "チリ", "Peru": "ペルー", "Ecuador": "エクアドル",
+    "Colombia": "コロンビア", "Venezuela": "ベネズエラ",
+    "Mexico": "メキシコ", "Guatemala": "グアテマラ",
+    "El Salvador": "エルサルバドル", "Nicaragua": "ニカラグア",
+    "Costa Rica": "コスタリカ", "Panama": "パナマ",
+    "Honduras": "ホンジュラス", "Argentina": "アルゼンチン",
+    "Bolivia": "ボリビア", "Brazil": "ブラジル",
+    "United States": "アメリカ", "Alaska": "アラスカ",
+    "Hawaii": "ハワイ", "Canada": "カナダ",
+    "Italy": "イタリア", "Greece": "ギリシャ",
+    "Romania": "ルーマニア", "Portugal": "ポルトガル",
+    "Algeria": "アルジェリア", "Morocco": "モロッコ",
+    "Ethiopia": "エチオピア", "Tanzania": "タンザニア",
+    "Fiji Islands": "フィジー諸島",
+    "Kermadec Islands": "ケルマデック諸島",
+    "Mariana Islands": "マリアナ諸島",
+    "Ryukyu Islands": "琉球諸島",
+    "Kuril Islands": "千島列島",
+    "Aleutian Islands": "アリューシャン列島",
+    "South Sandwich Islands": "サウスサンドウィッチ諸島",
+    "Banda Sea": "バンダ海", "Celebes Sea": "セレベス海",
+    "Philippine Sea": "フィリピン海",
+    "Pacific-Antarctic Ridge": "太平洋南極海嶺",
+    "Pacific Ocean": "太平洋", "Indian Ocean": "インド洋",
+    "Atlantic Ocean": "大西洋",
+}
+
+DIRECTION_JA = {
+    "N": "北", "S": "南", "E": "東", "W": "西",
+    "NE": "北東", "NW": "北西", "SE": "南東", "SW": "南西",
+    "NNE": "北北東", "NNW": "北北西", "SSE": "南南東", "SSW": "南南西",
+    "ENE": "東北東", "ESE": "東南東", "WNW": "西北西", "WSW": "西南西",
+}
+
+
+def format_place_ja(place: str) -> str:
+    """USGSの地名を日本語の短い表現に変換する"""
+    import re
+    if not place:
+        return "不明"
+
+    # カンマで分割して国名部分を日本語化
+    # 例: "126km SSE of Ormoc, Philippines" → "フィリピン"
+    if "," in place:
+        parts     = place.split(",")
+        region    = parts[-1].strip()
+        region_ja = COUNTRY_JA.get(region, region)
+        return f"{region_ja}"
+
+    # "XXX of the YYY" パターン → 場所名だけ日本語化
+    # 例: "south of the Fiji Islands" → "フィジー諸島 南方沖"
+    m = re.match(r"(.+?)\s+of\s+(?:the\s+)?(.+)", place, re.IGNORECASE)
+    if m:
+        direction_en = m.group(1).strip().title()
+        location_en  = m.group(2).strip()
+        location_ja  = COUNTRY_JA.get(location_en, location_en)
+        dir_map = {
+            "North": "北方", "South": "南方", "East": "東方", "West": "西方",
+            "Northeast": "北東方", "Northwest": "北西方",
+            "Southeast": "南東方", "Southwest": "南西方",
+            "Offshore": "沖合", "Near": "近海",
+        }
+        dir_ja = dir_map.get(direction_en, "")
+        return f"{location_ja}{dir_ja}沖" if dir_ja else f"{location_ja}沖"
+
+    # 不要語を除去してそのまま辞書変換
+    place_clean = re.sub(
+        r"\b(region|area|offshore|near|vicinity)\b", "",
+        place, flags=re.IGNORECASE
+    ).strip().rstrip(",").strip()
+    for en, ja in COUNTRY_JA.items():
+        if en in place_clean:
+            return place_clean.replace(en, ja)
+    return place_clean
+
+
 
 # ===================================================
 # 🤖 AIナナ キャラクター設定
@@ -411,35 +502,35 @@ AMAZON_TAG = os.environ.get("AMAZON_TAG", "your-tag-22")
 AMAZON_PRODUCTS = {
     "large": [
         # 震度6以上 or M7以上（大規模）
-        ("防災セット 家族4人用 5年保存",       "bousai-set+family+4nin"),
-        ("保存水 2L 24本 5年保存",              "hozonmizu+2L+24hon"),
-        ("非常食 7日分 セット アルファ米",       "hijyoshoku+7days+set"),
-        ("避難リュック 非常用持ち出し袋",        "hinan+rucksack+hijyo"),
-        ("携帯トイレ 50回分 防災",              "keitai+toilet+bousai"),
+        ("防災セット 家族4人用 5年保存",       "防災セット+家族+4人用"),
+        ("保存水 2L 24本 5年保存",              "保存水+2L+24本"),
+        ("非常食 7日分 セット アルファ米",       "非常食+7日分+セット"),
+        ("避難リュック 非常用持ち出し袋",        "避難リュック+非常用持ち出し袋"),
+        ("携帯トイレ 50回分 防災",              "携帯トイレ+防災"),
     ],
     "medium": [
         # 震度4〜5 or M5〜6台（中規模）
-        ("ポータブル電源 大容量 防災",           "portable+dengen+bousai"),
-        ("防災ラジオ 手回し充電 LED",            "bousai+radio+temawashi"),
-        ("懐中電灯 LED 防災 単3",               "kaichu+dento+LED+bousai"),
-        ("耐震マット 家具転倒防止",              "taishin+mat+kagu"),
-        ("救急セット 家庭用 防災",               "kyukyu+set+katei"),
+        ("ポータブル電源 大容量 防災",           "ポータブル電源+防災"),
+        ("防災ラジオ 手回し充電 LED",            "防災ラジオ+手回し充電"),
+        ("懐中電灯 LED 防災 単3",               "懐中電灯+LED+防災"),
+        ("耐震マット 家具転倒防止",              "耐震マット+家具転倒防止"),
+        ("救急セット 家庭用 防災",               "救急セット+家庭用"),
     ],
     "calm": [
         # 平穏・震度1〜3（備えを促す）
-        ("非常食 5年保存 缶詰 セット",           "hijyoshoku+5nen+kanme"),
-        ("保存水 500ml 48本 防災",              "hozonmizu+500ml+48hon"),
-        ("耐震ジェル 防振マット 家具",           "taishin+gel+bousai"),
-        ("防災 窓ガラス 飛散防止フィルム",        "bousai+garasu+film"),
-        ("備蓄 ローリングストック 食品",          "bichiku+rolling+stock"),
+        ("非常食 5年保存 缶詰 セット",           "非常食+5年保存+缶詰"),
+        ("保存水 500ml 48本 防災",              "保存水+500ml+48本"),
+        ("耐震ジェル 防振マット 家具",           "耐震ジェル+防振マット"),
+        ("防災 窓ガラス 飛散防止フィルム",        "防災+窓ガラス+飛散防止フィルム"),
+        ("備蓄 ローリングストック 食品",          "備蓄+ローリングストック"),
     ],
     "tsunami": [
         # 津波情報あり
-        ("防災ラジオ 津波 警報 受信",            "bousai+radio+tsunami"),
-        ("ライフジャケット 防災 自動膨張",        "life+jacket+jidou"),
-        ("避難リュック 軽量 防水",               "hinan+rucksack+kerryo"),
-        ("笛 防災 ホイッスル サバイバル",         "fue+bousai+whistle"),
-        ("防水バッグ 防災 貴重品",               "boosui+bag+bousai"),
+        ("防災ラジオ 津波 警報 受信",            "防災ラジオ+津波+警報"),
+        ("ライフジャケット 防災 自動膨張",        "ライフジャケット+自動膨張"),
+        ("避難リュック 軽量 防水",               "避難リュック+軽量+防水"),
+        ("笛 防災 ホイッスル サバイバル",         "防災+ホイッスル"),
+        ("防水バッグ 防災 貴重品",               "防水バッグ+防災"),
     ],
 }
 
@@ -764,7 +855,7 @@ def build_domestic_article(quake: dict) -> dict:
   </tr>
   <tr>
     <td style="padding:10px;border:1px solid #ddd;">震源地</td>
-    <td style="padding:10px;border:1px solid #ddd;"><strong>{place}</strong></td>
+    <td style="padding:10px;border:1px solid #ddd;"><strong>{place_ja}</strong></td>
   </tr>
   <tr style="background:#f9f9f9;">
     <td style="padding:10px;border:1px solid #ddd;">最大震度</td>
@@ -857,8 +948,9 @@ def build_overseas_article(quake: dict) -> dict:
 
     usgs_link = f'<a href="{url}" target="_blank" rel="noopener">USGS詳細ページ</a>' if url else ""
 
-    title   = f"【海外地震】{place} M{mag}（{time_str}）"
-    excerpt = f"{time_str}頃、{place}でM{mag}（深さ{depth_str}）の地震が発生しました。"
+    place_ja = format_place_ja(place)
+    title   = f"【海外地震】{place_ja} M{mag}（{time_str}）"
+    excerpt = f"{time_str}頃、{place_ja}でM{mag}（深さ{depth_str}）の地震が発生しました。"
 
     # ナナのコメント生成
     tsunami_txt = "津波情報あり。" if tsunami else ""
@@ -878,7 +970,7 @@ def build_overseas_article(quake: dict) -> dict:
         amazon_level = "medium"
     amazon_html = build_amazon_html(amazon_level)
 
-    content = f"""<p>🌏 <strong>{time_str}頃</strong>、<strong>{place}</strong>で地震が発生しました。</p>
+    content = f"""<p>🌏 <strong>{time_str}頃</strong>、<strong>{place_ja}</strong>で地震が発生しました。</p>
 
 <p style="color:{mag_color};">{mag_comment}</p>
 
@@ -895,7 +987,7 @@ def build_overseas_article(quake: dict) -> dict:
   </tr>
   <tr>
     <td style="padding:10px;border:1px solid #ddd;">震源地</td>
-    <td style="padding:10px;border:1px solid #ddd;"><strong>{place}</strong></td>
+    <td style="padding:10px;border:1px solid #ddd;"><strong>{place_ja}</strong></td>
   </tr>
   <tr style="background:#f9f9f9;">
     <td style="padding:10px;border:1px solid #ddd;">マグニチュード</td>
