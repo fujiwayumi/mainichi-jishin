@@ -22,7 +22,7 @@ WP_USER     = os.environ.get("EQ_WP_USER", "")
 WP_PASSWORD = os.environ.get("EQ_WP_PASSWORD", "")
 
 # 閾値
-DOMESTIC_SHINDO_MIN = 2      # 国内：震度2以上
+DOMESTIC_SHINDO_MIN = 4      # 国内：震度4以上
 OVERSEAS_MAG_MIN    = 5.0    # 海外：M5.0以上
 
 # カテゴリID（WordPressで事前に作成しておく）
@@ -903,7 +903,7 @@ def build_domestic_article(quake: dict) -> dict:
   </tr>
   <tr>
     <td style="padding:10px;border:1px solid #ddd;">震源地</td>
-    <td style="padding:10px;border:1px solid #ddd;"><strong>{place_ja}</strong></td>
+    <td style="padding:10px;border:1px solid #ddd;"><strong>{place}</strong></td>
   </tr>
   <tr style="background:#f9f9f9;">
     <td style="padding:10px;border:1px solid #ddd;">最大震度</td>
