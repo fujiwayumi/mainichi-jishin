@@ -22,7 +22,7 @@ WP_USER     = os.environ.get("EQ_WP_USER", "")
 WP_PASSWORD = os.environ.get("EQ_WP_PASSWORD", "")
 
 # 閾値
-DOMESTIC_SHINDO_MIN = 4      # 国内：震度4以上
+DOMESTIC_SHINDO_MIN = 2      # 国内：震度2以上
 OVERSEAS_MAG_MIN    = 5.0    # 海外：M5.0以上
 
 # カテゴリID（WordPressで事前に作成しておく）
