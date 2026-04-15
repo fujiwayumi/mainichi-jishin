@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 【地震速報 自動投稿システム】
-- 国内：気象庁防災XML → 震度4以上で即投稿
+- 国内：気象庁防災XML → 震度2以上で即投稿
 - 海外：USGS Earthquake API → M5以上で即投稿
 - 重複防止：earthquake_memory.json で投稿済みIDを管理
 - 投稿先：別WordPressサイト（REST API）
@@ -22,7 +22,7 @@ WP_USER     = os.environ.get("EQ_WP_USER", "")
 WP_PASSWORD = os.environ.get("EQ_WP_PASSWORD", "")
 
 # 閾値
-DOMESTIC_SHINDO_MIN = 4      # 国内：震度4以上
+DOMESTIC_SHINDO_MIN = 2      # 国内：震度2以上
 OVERSEAS_MAG_MIN    = 5.0    # 海外：M5.0以上
 
 # カテゴリID（WordPressで事前に作成しておく）
@@ -759,7 +759,10 @@ def fetch_domestic_quakes_simple() -> list[dict]:
                 10: "1", 20: "2", 30: "3", 40: "4",
                 45: "5-", 50: "5+", 55: "6-", 60: "6+", 70: "7"
             }
-            max_shindo = shindo_map.get(max_shindo_raw, str(max_shindo_raw))
+            # maxScale=-1は震度情報なし→スキップ
+            if max_shindo_raw == -1:
+                continue
+            max_shindo = shindo_map.get(max_shindo_raw, "不明")
             time_str = eq.get("time", "")
             event_id = item.get("id", "")
 
@@ -903,7 +906,7 @@ def build_domestic_article(quake: dict) -> dict:
   </tr>
   <tr>
     <td style="padding:10px;border:1px solid #ddd;">震源地</td>
-    <td style="padding:10px;border:1px solid #ddd;"><strong>{place}</strong></td>
+    <td style="padding:10px;border:1px solid #ddd;"><strong>{place_ja}</strong></td>
   </tr>
   <tr style="background:#f9f9f9;">
     <td style="padding:10px;border:1px solid #ddd;">最大震度</td>
@@ -1199,6 +1202,7 @@ def main():
         shindo_num = shindo_num_map.get(shindo, 0)
 
         if shindo_num < DOMESTIC_SHINDO_MIN:
+            print(f"  → 閾値以下でスキップ: {place} 震度{shindo}({shindo_num}) M{mag}")
             continue
 
         if already_posted(memory, event_id):
