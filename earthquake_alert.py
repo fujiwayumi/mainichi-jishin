@@ -906,7 +906,7 @@ def build_domestic_article(quake: dict) -> dict:
   </tr>
   <tr>
     <td style="padding:10px;border:1px solid #ddd;">震源地</td>
-    <td style="padding:10px;border:1px solid #ddd;"><strong>{place_ja}</strong></td>
+    <td style="padding:10px;border:1px solid #ddd;"><strong>{place}</strong></td>
   </tr>
   <tr style="background:#f9f9f9;">
     <td style="padding:10px;border:1px solid #ddd;">最大震度</td>
