@@ -400,36 +400,36 @@ def generate_eyecatch_svg_overseas(
     </linearGradient>
   </defs>
   <rect width="{W}" height="{H}" fill="url(#bg)"/>
-  <circle cx="{W}" cy="0" r="300" fill="white" fill-opacity="0.04"/>
-  <circle cx="{W}" cy="0" r="180" fill="white" fill-opacity="0.04"/>
+  <circle cx="900" cy="400" r="300" fill="white" fill-opacity="0.04"/>
 
   <!-- ヘッダー -->
   <rect x="0" y="0" width="{W}" height="72" fill="#00000033"/>
-  <text x="40" y="47" font-family="sans-serif" font-size="26" font-weight="bold"
+  <text x="40" y="47" font-family="sans-serif" font-size="24" font-weight="bold"
         fill="white" opacity="0.9">🌏 {_esc(SITE_NAME)}</text>
 
-  <!-- ラベル -->
-  <rect x="40" y="110" width="220" height="52" rx="6" fill="white" fill-opacity="0.2"/>
-  <text x="150" y="146" font-family="sans-serif" font-size="28" font-weight="bold"
+  <!-- ラベル（左上） -->
+  <rect x="40" y="90" width="200" height="44" rx="6" fill="white" fill-opacity="0.2"/>
+  <text x="140" y="120" font-family="sans-serif" font-size="24" font-weight="bold"
         fill="white" text-anchor="middle">海外地震速報</text>
 
+  <!-- M値ラベル -->
+  <text x="40" y="230" font-family="sans-serif" font-size="40"
+        fill="{accent}" font-weight="bold" opacity="0.8">マグニチュード</text>
   <!-- M値（大） -->
-  <text x="40" y="310" font-family="sans-serif" font-size="52"
-        fill="{accent}" font-weight="bold" opacity="0.7">マグニチュード</text>
-  <text x="40" y="460" font-family="sans-serif" font-size="180" font-weight="bold"
+  <text x="40" y="390" font-family="sans-serif" font-size="150" font-weight="bold"
         fill="white">{_esc(mag_str)}</text>
 
-  <!-- 地名・日時 -->
-  <text x="700" y="320" font-family="sans-serif" font-size="42" font-weight="bold"
+  <!-- 右側：地名・日時 -->
+  <text x="680" y="250" font-family="sans-serif" font-size="42" font-weight="bold"
         fill="white">{place_esc}</text>
-  <text x="700" y="390" font-family="sans-serif" font-size="32"
+  <text x="680" y="320" font-family="sans-serif" font-size="30"
         fill="white" opacity="0.75">{time_esc}</text>
 
   {tsunami_el}
 
   <!-- フッター -->
-  <rect x="0" y="{H - 64}" width="{W}" height="64" fill="#00000044"/>
-  <text x="40" y="{H - 22}" font-family="sans-serif" font-size="22"
+  <rect x="0" y="{H - 58}" width="{W}" height="58" fill="#00000044"/>
+  <text x="40" y="{H - 18}" font-family="sans-serif" font-size="20"
         fill="white" opacity="0.7">{_esc(SITE_TAGLINE)}</text>
 </svg>'''
     return svg
