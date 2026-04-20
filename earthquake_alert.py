@@ -22,7 +22,7 @@ WP_USER     = os.environ.get("EQ_WP_USER", "")
 WP_PASSWORD = os.environ.get("EQ_WP_PASSWORD", "")
 
 # 閾値
-DOMESTIC_SHINDO_MIN = 4      # 国内：震度4以上
+DOMESTIC_SHINDO_MIN = 2      # 国内：震度2以上
 OVERSEAS_MAG_MIN    = 5.0    # 海外：M5.0以上
 
 # カテゴリID（WordPressで事前に作成しておく）
@@ -334,37 +334,43 @@ def generate_eyecatch_svg_domestic(
 
   <!-- 背景 -->
   <rect width="{W}" height="{H}" fill="url(#bg)"/>
-  <circle cx="900" cy="400" r="300" fill="white" fill-opacity="0.04"/>
+  <!-- 右下装飾円 -->
+  <circle cx="{W}" cy="{H}" r="340" fill="white" fill-opacity="0.05"/>
+  <circle cx="{W}" cy="{H}" r="220" fill="white" fill-opacity="0.05"/>
 
   <!-- ヘッダーバー -->
   <rect x="0" y="0" width="{W}" height="72" fill="#00000033"/>
-  <text x="40" y="47" font-family="sans-serif" font-size="24" font-weight="bold"
+  <text x="40" y="47" font-family="sans-serif" font-size="26" font-weight="bold"
         fill="white" opacity="0.9">🌏 {_esc(SITE_NAME)}</text>
 
-  <!-- 速報ラベル（左上） -->
-  <rect x="40" y="90" width="160" height="44" rx="6" fill="white" fill-opacity="0.2"/>
-  <text x="120" y="120" font-family="sans-serif" font-size="24" font-weight="bold"
+  <!-- 速報ラベル -->
+  <rect x="40" y="110" width="180" height="52" rx="6" fill="white" fill-opacity="0.2"/>
+  <text x="130" y="146" font-family="sans-serif" font-size="28" font-weight="bold"
         fill="white" text-anchor="middle">地震速報</text>
 
-  <!-- 震度ラベル（左・中央） -->
-  <text x="40" y="230" font-family="sans-serif" font-size="40" fill="{accent}"
-        font-weight="bold" opacity="0.8">最大震度</text>
-  <text x="40" y="390" font-family="sans-serif" font-size="150" font-weight="bold"
-        fill="white">{_esc(label)}</text>
+  <!-- 震度（大） -->
+  <text x="40" y="310" font-family="sans-serif" font-size="52" fill="{accent}" font-weight="bold"
+        opacity="0.6">最大震度</text>
+  <text x="40" y="440" font-family="sans-serif" font-size="160" font-weight="bold"
+        fill="white">{_esc(label.replace("震度",""))}</text>
 
-  <!-- 右側：M・地名・日時 -->
-  <text x="680" y="200" font-family="sans-serif" font-size="36" fill="{accent}"
+  <!-- 縦区切り -->
+  <line x1="480" y1="180" x2="480" y2="500" stroke="white" stroke-width="2" opacity="0.3"/>
+
+  <!-- 右側：マグニチュード・地名・日時 -->
+  <text x="540" y="260" font-family="sans-serif" font-size="44" fill="{accent}"
         font-weight="bold" opacity="0.8">マグニチュード</text>
-  <text x="680" y="320" font-family="sans-serif" font-size="100" font-weight="bold"
+  <text x="540" y="360" font-family="sans-serif" font-size="110" font-weight="bold"
         fill="white">{_esc(mag_str)}</text>
-  <text x="680" y="410" font-family="sans-serif" font-size="42" font-weight="bold"
+
+  <text x="540" y="440" font-family="sans-serif" font-size="48" font-weight="bold"
         fill="white">{place_esc}</text>
-  <text x="680" y="470" font-family="sans-serif" font-size="28" fill="white"
+  <text x="540" y="495" font-family="sans-serif" font-size="32" fill="white"
         opacity="0.75">{time_display}</text>
 
   <!-- フッター -->
-  <rect x="0" y="{H - 58}" width="{W}" height="58" fill="#00000044"/>
-  <text x="40" y="{H - 18}" font-family="sans-serif" font-size="20"
+  <rect x="0" y="{H - 64}" width="{W}" height="64" fill="#00000044"/>
+  <text x="40" y="{H - 22}" font-family="sans-serif" font-size="22"
         fill="white" opacity="0.7">{_esc(SITE_TAGLINE)}</text>
 </svg>'''
     return svg
@@ -400,36 +406,36 @@ def generate_eyecatch_svg_overseas(
     </linearGradient>
   </defs>
   <rect width="{W}" height="{H}" fill="url(#bg)"/>
-  <circle cx="900" cy="400" r="300" fill="white" fill-opacity="0.04"/>
+  <circle cx="{W}" cy="0" r="300" fill="white" fill-opacity="0.04"/>
+  <circle cx="{W}" cy="0" r="180" fill="white" fill-opacity="0.04"/>
 
   <!-- ヘッダー -->
   <rect x="0" y="0" width="{W}" height="72" fill="#00000033"/>
-  <text x="40" y="47" font-family="sans-serif" font-size="24" font-weight="bold"
+  <text x="40" y="47" font-family="sans-serif" font-size="26" font-weight="bold"
         fill="white" opacity="0.9">🌏 {_esc(SITE_NAME)}</text>
 
-  <!-- ラベル（左上） -->
-  <rect x="40" y="90" width="200" height="44" rx="6" fill="white" fill-opacity="0.2"/>
-  <text x="140" y="120" font-family="sans-serif" font-size="24" font-weight="bold"
+  <!-- ラベル -->
+  <rect x="40" y="110" width="220" height="52" rx="6" fill="white" fill-opacity="0.2"/>
+  <text x="150" y="146" font-family="sans-serif" font-size="28" font-weight="bold"
         fill="white" text-anchor="middle">海外地震速報</text>
 
-  <!-- M値ラベル -->
-  <text x="40" y="230" font-family="sans-serif" font-size="40"
-        fill="{accent}" font-weight="bold" opacity="0.8">マグニチュード</text>
   <!-- M値（大） -->
-  <text x="40" y="390" font-family="sans-serif" font-size="150" font-weight="bold"
+  <text x="40" y="310" font-family="sans-serif" font-size="52"
+        fill="{accent}" font-weight="bold" opacity="0.7">マグニチュード</text>
+  <text x="40" y="460" font-family="sans-serif" font-size="180" font-weight="bold"
         fill="white">{_esc(mag_str)}</text>
 
-  <!-- 右側：地名・日時 -->
-  <text x="680" y="250" font-family="sans-serif" font-size="42" font-weight="bold"
+  <!-- 地名・日時 -->
+  <text x="700" y="320" font-family="sans-serif" font-size="42" font-weight="bold"
         fill="white">{place_esc}</text>
-  <text x="680" y="320" font-family="sans-serif" font-size="30"
+  <text x="700" y="390" font-family="sans-serif" font-size="32"
         fill="white" opacity="0.75">{time_esc}</text>
 
   {tsunami_el}
 
   <!-- フッター -->
-  <rect x="0" y="{H - 58}" width="{W}" height="58" fill="#00000044"/>
-  <text x="40" y="{H - 18}" font-family="sans-serif" font-size="20"
+  <rect x="0" y="{H - 64}" width="{W}" height="64" fill="#00000044"/>
+  <text x="40" y="{H - 22}" font-family="sans-serif" font-size="22"
         fill="white" opacity="0.7">{_esc(SITE_TAGLINE)}</text>
 </svg>'''
     return svg
@@ -766,9 +772,10 @@ def fetch_domestic_quakes_simple() -> list[dict]:
 
             time_str = eq.get("time", "")
             event_id = item.get("id", "")
-            # event_idが空の場合はtime+placeで代替（重複防止）
             if not event_id:
                 event_id = f"{time_str}_{place}".replace(" ", "_")
+
+            print(f"  → 取得: {place} maxScale={max_shindo_raw} 震度={max_shindo} M{mag}")
 
             quakes.append({
                 "id":         f"p2p_{event_id}",
