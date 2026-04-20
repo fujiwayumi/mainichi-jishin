@@ -2,7 +2,7 @@ name: Earthquake Auto Post
 
 on:
   schedule:
-    - cron: '*/15 * * * *'   # 速報：15分おきに起動
+    - cron: '*/1 * * * *'   # 速報：15分おきに起動
     - cron: '0 15 * * *'    # 日次まとめ：毎日深夜0時30分 JST（= UTC 15:30）
   workflow_dispatch:          # 手動実行も可能
 
