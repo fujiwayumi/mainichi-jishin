@@ -22,7 +22,7 @@ WP_USER     = os.environ.get("EQ_WP_USER", "")
 WP_PASSWORD = os.environ.get("EQ_WP_PASSWORD", "")
 
 # 閾値
-DOMESTIC_SHINDO_MIN = 2      # 国内：震度2以上
+DOMESTIC_SHINDO_MIN = 4      # 国内：震度4以上
 OVERSEAS_MAG_MIN    = 5.0    # 海外：M5.0以上
 
 # カテゴリID（WordPressで事前に作成しておく）
@@ -218,9 +218,7 @@ NANA_SYSTEM_PROMPT = """
 - 合計100文字以内に収める
 - 「AIナナです」などの自己紹介は不要。いきなり本題から
 - 絵文字は1〜2個まで
-- Markdown記法（**太字**など）は絶対に使わない
-- 強調したい部分は <strong>テキスト</strong> のHTMLタグを使う
-- それ以外のHTMLタグは使わない
+- HTMLタグは使わない。テキストのみ
 """
 
 
@@ -278,6 +276,9 @@ EYECATCH_COLORS = {
     "5+":   {"bg": "#E64A19", "accent": "#FFCCBC", "label": "震度5強"},
     "5-":   {"bg": "#F57C00", "accent": "#FFE0B2", "label": "震度5弱"},
     "4":    {"bg": "#F9A825", "accent": "#FFF9C4", "label": "震度4"},
+    "3":    {"bg": "#1976D2", "accent": "#BBDEFB", "label": "震度3"},
+    "2":    {"bg": "#0288D1", "accent": "#B3E5FC", "label": "震度2"},
+    "1":    {"bg": "#0097A7", "accent": "#B2EBF2", "label": "震度1"},
     "overseas_large": {"bg": "#1565C0", "accent": "#BBDEFB", "label": "海外地震"},
     "overseas_mid":   {"bg": "#1976D2", "accent": "#BBDEFB", "label": "海外地震"},
     "calm": {"bg": "#2E7D32", "accent": "#C8E6C9", "label": "平穏"},
@@ -761,21 +762,9 @@ def fetch_domestic_quakes_simple() -> list[dict]:
                 10: "1", 20: "2", 30: "3", 40: "4",
                 45: "5-", 50: "5+", 55: "6-", 60: "6+", 70: "7"
             }
-            # maxScale=-1は震度情報なし→スキップ
-            if max_shindo_raw == -1:
-                continue
-            max_shindo = shindo_map.get(max_shindo_raw, "不明")
-
-            # magnitude=-1は不明→スキップ
-            if mag == -1 or mag is None:
-                continue
-
+            max_shindo = shindo_map.get(max_shindo_raw, str(max_shindo_raw))
             time_str = eq.get("time", "")
             event_id = item.get("id", "")
-            if not event_id:
-                event_id = f"{time_str}_{place}".replace(" ", "_")
-
-            print(f"  → 取得: {place} maxScale={max_shindo_raw} 震度={max_shindo} M{mag}")
 
             quakes.append({
                 "id":         f"p2p_{event_id}",
@@ -917,7 +906,7 @@ def build_domestic_article(quake: dict) -> dict:
   </tr>
   <tr>
     <td style="padding:10px;border:1px solid #ddd;">震源地</td>
-    <td style="padding:10px;border:1px solid #ddd;"><strong>{place}</strong></td>
+    <td style="padding:10px;border:1px solid #ddd;"><strong>{place_ja}</strong></td>
   </tr>
   <tr style="background:#f9f9f9;">
     <td style="padding:10px;border:1px solid #ddd;">最大震度</td>
@@ -1049,7 +1038,7 @@ def build_overseas_article(quake: dict) -> dict:
   </tr>
   <tr>
     <td style="padding:10px;border:1px solid #ddd;">震源地</td>
-    <td style="padding:10px;border:1px solid #ddd;"><strong>{place}</strong></td>
+    <td style="padding:10px;border:1px solid #ddd;"><strong>{place_ja}</strong></td>
   </tr>
   <tr style="background:#f9f9f9;">
     <td style="padding:10px;border:1px solid #ddd;">マグニチュード</td>
