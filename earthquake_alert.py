@@ -762,9 +762,22 @@ def fetch_domestic_quakes_simple() -> list[dict]:
                 10: "1", 20: "2", 30: "3", 40: "4",
                 45: "5-", 50: "5+", 55: "6-", 60: "6+", 70: "7"
             }
-            max_shindo = shindo_map.get(max_shindo_raw, str(max_shindo_raw))
+            # maxScale=-1は震度情報なし→スキップ
+            if max_shindo_raw == -1:
+                continue
+            max_shindo = shindo_map.get(max_shindo_raw, "不明")
+
+            # magnitude=-1は不明→スキップ
+            if mag == -1 or mag is None:
+                continue
+
             time_str = eq.get("time", "")
             event_id = item.get("id", "")
+            # event_idが空の場合はtime+placeで代替（重複防止）
+            if not event_id:
+                event_id = f"{time_str}_{place}".replace(" ", "_")
+
+            print(f"  → 取得: {place} maxScale={max_shindo_raw} 震度={max_shindo} M{mag}")
 
             quakes.append({
                 "id":         f"p2p_{event_id}",
