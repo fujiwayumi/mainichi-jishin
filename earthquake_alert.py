@@ -547,7 +547,7 @@ def upload_svg_as_eyecatch(svg_str: str, slug: str, auth_header: str) -> int | N
 # ===================================================
 # 🛒 Amazonアフィリエイト設定
 # ===================================================
-AMAZON_TAG = os.environ.get("AMAZON_TAG", "your-tag-22")
+AMAZON_TAG = os.environ.get("AMAZON_TAG", "mainichi-jishin-22")
 
 # 状況別おすすめ商品（キーワード → Amazonリンク）
 AMAZON_PRODUCTS = {
