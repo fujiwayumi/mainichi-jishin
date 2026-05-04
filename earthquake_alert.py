@@ -547,7 +547,7 @@ def upload_svg_as_eyecatch(svg_str: str, slug: str, auth_header: str) -> int | N
 # ===================================================
 # 🛒 Amazonアフィリエイト設定
 # ===================================================
-AMAZON_TAG = os.environ.get("AMAZON_TAG", "mainichi-jishin-22")
+AMAZON_TAG = os.environ.get("AMAZON_TAG", "your-tag-22")
 
 # 状況別おすすめ商品（キーワード → Amazonリンク）
 AMAZON_PRODUCTS = {
@@ -762,22 +762,9 @@ def fetch_domestic_quakes_simple() -> list[dict]:
                 10: "1", 20: "2", 30: "3", 40: "4",
                 45: "5-", 50: "5+", 55: "6-", 60: "6+", 70: "7"
             }
-            # maxScale=-1は震度情報なし→スキップ
-            if max_shindo_raw == -1:
-                continue
-            max_shindo = shindo_map.get(max_shindo_raw, "不明")
-
-            # magnitude=-1は不明→スキップ
-            if mag == -1 or mag is None:
-                continue
-
+            max_shindo = shindo_map.get(max_shindo_raw, str(max_shindo_raw))
             time_str = eq.get("time", "")
             event_id = item.get("id", "")
-            # event_idが空の場合はtime+placeで代替（重複防止）
-            if not event_id:
-                event_id = f"{time_str}_{place}".replace(" ", "_")
-
-            print(f"  → 取得: {place} maxScale={max_shindo_raw} 震度={max_shindo} M{mag}")
 
             quakes.append({
                 "id":         f"p2p_{event_id}",
@@ -827,6 +814,24 @@ def fetch_overseas_quakes() -> list[dict]:
 
             # 日本国内の地震は除外（USGSは国内も含む）
             if "Japan" in place:
+                continue
+
+            # ── 日本関連フィルタ ──
+            # 以下のいずれかに該当する場合のみ投稿
+            # ① 津波情報あり
+            # ② M7.0以上の大規模地震
+            # ③ 日本近海（緯度24〜46・経度122〜146度の範囲）
+            lat = coords[1] if len(coords) > 1 else None
+            lon = coords[0] if len(coords) > 0 else None
+            is_near_japan = (
+                lat is not None and lon is not None and
+                24 <= lat <= 46 and 122 <= lon <= 146
+            )
+            is_large      = float(mag) >= 7.0
+            is_tsunami    = bool(tsunami)
+
+            if not (is_tsunami or is_large or is_near_japan):
+                print(f"  → 海外スキップ（日本無関係）: {place} M{mag}")
                 continue
 
             # 発生時刻をJSTに変換
