@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 【地震速報 自動投稿システム】
-- 国内：気象庁防災XML → 震度4以上で即投稿
+- 国内：気象庁防災XML → 震度3以上で即投稿
 - 海外：USGS Earthquake API → M5以上で即投稿
 - 重複防止：earthquake_memory.json で投稿済みIDを管理
 - 投稿先：別WordPressサイト（REST API）
@@ -22,7 +22,7 @@ WP_USER     = os.environ.get("EQ_WP_USER", "")
 WP_PASSWORD = os.environ.get("EQ_WP_PASSWORD", "")
 
 # 閾値
-DOMESTIC_SHINDO_MIN = 4      # 国内：震度4以上
+DOMESTIC_SHINDO_MIN = 3      # 国内：震度3以上
 OVERSEAS_MAG_MIN    = 5.0    # 海外：M5.0以上
 
 # カテゴリID（WordPressで事前に作成しておく）
