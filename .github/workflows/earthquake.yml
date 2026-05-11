@@ -4,7 +4,6 @@ on:
   schedule:
     - cron: '*/5 * * * *'    # 速報：5分おきに起動
     - cron: '0 2 * * *'      # コンテンツ記事①：毎日11時00分 JST（= UTC 2:00）
-    - cron: '0 11 * * *'     # コンテンツ記事②：毎日20時00分 JST（= UTC 11:00）
   workflow_dispatch:
 
 permissions:
