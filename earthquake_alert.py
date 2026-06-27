@@ -621,24 +621,53 @@ def load_memory() -> dict:
         with open(MEMORY_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     except Exception:
-        return {"posted_ids": [], "last_updated": ""}
+        return {"posted_ids": [], "posted_quake_keys": [], "last_updated": ""}
 
 
 def save_memory(memory: dict):
     memory["last_updated"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     # 古いIDを削除（直近500件のみ保持）
     memory["posted_ids"] = memory["posted_ids"][-500:]
+    memory["posted_quake_keys"] = memory.get("posted_quake_keys", [])[-500:]
     with open(MEMORY_FILE, "w", encoding="utf-8") as f:
         json.dump(memory, f, ensure_ascii=False, indent=2)
 
 
-def already_posted(memory: dict, event_id: str) -> bool:
-    return event_id in memory.get("posted_ids", [])
+def make_quake_key(quake: dict) -> str:
+    """
+    発生時刻（分単位）+ 震源地 の組み合わせキーを生成。
+    P2PQuake は同一地震を第1報・第2報と複数エントリで返すことがあり、
+    エントリごとに id が異なるため ID だけでは重複を防げない。
+    この関数で「同じ地震」を同一視するセカンダリキーを作る。
+    """
+    time_str = str(quake.get("origin_time", ""))[:16]  # 分単位まで（秒以下切り捨て）
+    place    = quake.get("place", "不明")
+    mag      = quake.get("magnitude", 0)
+    return f"{time_str}__{place}__{mag}"
 
 
-def mark_posted(memory: dict, event_id: str):
+def already_posted(memory: dict, event_id: str, quake: dict = None) -> bool:
+    # ① APIのIDで確認（従来チェック）
+    if event_id in memory.get("posted_ids", []):
+        return True
+    # ② 同一地震キー（発生時刻+震源地+M）で確認（第1報・第2報の重複防止）
+    if quake is not None:
+        key = make_quake_key(quake)
+        if key in memory.get("posted_quake_keys", []):
+            print(f"  → スキップ（同一地震キー一致）: {key}")
+            return True
+    return False
+
+
+def mark_posted(memory: dict, event_id: str, quake: dict = None):
     if event_id not in memory["posted_ids"]:
         memory["posted_ids"].append(event_id)
+    if quake is not None:
+        if "posted_quake_keys" not in memory:
+            memory["posted_quake_keys"] = []
+        key = make_quake_key(quake)
+        if key not in memory["posted_quake_keys"]:
+            memory["posted_quake_keys"].append(key)
 
 
 # ===================================================
@@ -1235,7 +1264,7 @@ def main():
         if shindo_num < DOMESTIC_SHINDO_MIN:
             continue
 
-        if already_posted(memory, event_id):
+        if already_posted(memory, event_id, quake):
             print(f"  → スキップ（投稿済み）: {place} 震度{shindo}")
             continue
 
@@ -1244,7 +1273,7 @@ def main():
         result  = post_to_wordpress(article)
 
         if result:
-            mark_posted(memory, event_id)
+            mark_posted(memory, event_id, quake)
             posted_count += 1
             print(f"  → 投稿成功！ ID:{result['id']} / {result.get('link','')}")
         else:
@@ -1260,7 +1289,7 @@ def main():
         mag      = quake.get("magnitude", 0)
         place    = quake.get("place", "不明")
 
-        if already_posted(memory, event_id):
+        if already_posted(memory, event_id, quake):
             print(f"  → スキップ（投稿済み）: {place} M{mag}")
             continue
 
@@ -1269,7 +1298,7 @@ def main():
         result  = post_to_wordpress(article)
 
         if result:
-            mark_posted(memory, event_id)
+            mark_posted(memory, event_id, quake)
             posted_count += 1
             print(f"  → 投稿成功！ ID:{result['id']} / {result.get('link','')}")
         else:
