@@ -3,7 +3,7 @@ name: Earthquake Auto Post
 on:
   schedule:
     - cron: '*/5 * * * *'    # 速報：5分おきに起動
-    - cron: '0 2 * * *'      # コンテンツ記事①：毎日11時00分 JST（= UTC 2:00）
+    - cron: '0 2 * * 1,3,5' # コンテンツ記事：月・水・金 JST 11:00（週3回に削減）
   workflow_dispatch:
 
 permissions:
@@ -51,14 +51,13 @@ jobs:
           git push
 
   # ──────────────────────────────────────────
-  # コンテンツ記事ジョブ（1日2回）
+  # コンテンツ記事ジョブ（週3回：月・水・金）
   # ──────────────────────────────────────────
   earthquake-content:
     runs-on: ubuntu-latest
     if: >
       github.event_name == 'schedule' &&
-      (github.event.schedule == '0 2 * * *' ||
-       github.event.schedule == '0 11 * * *')
+      github.event.schedule == '0 2 * * 1,3,5'
     steps:
       - uses: actions/checkout@v4
         with:
