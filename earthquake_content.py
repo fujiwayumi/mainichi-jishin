@@ -469,12 +469,12 @@ JSON形式のみで出力してください（マークダウン記法・コー�
             "anthropic-version": "2023-06-01",
         },
         json={
-            "model":   "claude-sonnet-4-20250514",
+            "model":   "claude-haiku-4-5-20251001",
             "max_tokens": 8000,
             "system":  NANA_CHARACTER_PROMPT,
             "messages": [{"role": "user", "content": user_prompt}],
         },
-        timeout=120,
+        timeout=280,
     )
     response.raise_for_status()
     raw = response.json()["content"][0]["text"].strip()
