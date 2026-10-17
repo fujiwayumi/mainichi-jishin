@@ -11,6 +11,7 @@ import os
 import json
 import requests
 import base64
+import urllib.parse
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone, timedelta
 
@@ -547,7 +548,31 @@ def upload_svg_as_eyecatch(svg_str: str, slug: str, auth_header: str) -> int | N
 # ===================================================
 # 🛒 Amazonアフィリエイト設定
 # ===================================================
-AMAZON_TAG = os.environ.get("AMAZON_TAG", "your-tag-22")
+AMAZON_TAG = os.environ.get("AMAZON_TAG", "mainichi-jishin-22")
+
+# ===================================================
+# 🛒 楽天アフィリエイト設定
+# ===================================================
+# アフィリエイトIDは秘密情報ではないので直書きでOK
+RAKUTEN_AFF_ID = "588d647a.e52acd92.588d647b.47962ed1"
+
+
+def rakuten_aff_url(target_url: str) -> str:
+    """楽天の通常URLを楽天アフィリエイトリンク（計測あり）に変換する"""
+    if not RAKUTEN_AFF_ID:
+        return target_url
+    enc = urllib.parse.quote(target_url, safe="")
+    return f"https://hb.afl.rakuten.co.jp/hgc/{RAKUTEN_AFF_ID}/?pc={enc}&m={enc}"
+
+
+def rakuten_search_url(keyword: str) -> str:
+    """キーワードから楽天市場の検索結果アフィリエイトリンクを作る
+    ※楽天は「+」や%20だと検索窓に「+」が残るため、全角スペースでつなぐ
+    """
+    kw = keyword.replace("+", "　").replace(" ", "　")
+    return rakuten_aff_url(
+        f"https://search.rakuten.co.jp/search/mall/{urllib.parse.quote(kw)}/"
+    )
 
 # 状況別おすすめ商品（キーワード → Amazonリンク）
 AMAZON_PRODUCTS = {
@@ -587,17 +612,27 @@ AMAZON_PRODUCTS = {
 
 
 def build_amazon_html(level: str, count: int = 3) -> str:
-    """状況レベルに応じたAmazonリンクHTMLを生成"""
+    """状況レベルに応じたAmazon＋楽天リンクHTMLを生成"""
     import random
     products = AMAZON_PRODUCTS.get(level, AMAZON_PRODUCTS["calm"])
     picked   = random.sample(products, min(count, len(products)))
 
+    btn = (
+        "display:inline-block;padding:3px 10px;margin:4px 6px 0 0;border-radius:4px;"
+        "font-size:13px;font-weight:bold;color:#fff;text-decoration:none;"
+    )
+
     items_html = ""
     for label, keyword in picked:
-        url = f"https://www.amazon.co.jp/s?k={keyword}&tag={AMAZON_TAG}"
+        amazon_url  = f"https://www.amazon.co.jp/s?k={keyword}&tag={AMAZON_TAG}"
+        rakuten_url = rakuten_search_url(keyword)
         items_html += (
-            f'  <li style="margin-bottom:8px;">\n'
-            f'    🛒 <a href="{url}" target="_blank" rel="noopener sponsored">{label}</a>\n'
+            f'  <li style="margin-bottom:12px;">\n'
+            f'    🛒 {label}<br>\n'
+            f'    <a href="{amazon_url}" target="_blank" rel="noopener sponsored" '
+            f'style="{btn}background:#FF9900;">Amazonで見る</a>\n'
+            f'    <a href="{rakuten_url}" target="_blank" rel="noopener sponsored" '
+            f'style="{btn}background:#BF0000;">楽天市場で見る</a>\n'
             f'  </li>\n'
         )
 
@@ -608,7 +643,7 @@ def build_amazon_html(level: str, count: int = 3) -> str:
         f'<ul style="padding-left:4px;list-style:none;">\n'
         f'{items_html}</ul>\n'
         f'<p style="font-size:11px;color:#999;margin-top:6px;">'
-        f'※Amazonアソシエイトリンクを含みます</p>\n'
+        f'※Amazonアソシエイト・楽天アフィリエイトのリンクを含みます</p>\n'
         f'</div>'
     )
 
