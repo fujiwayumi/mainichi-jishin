@@ -1,0 +1,30 @@
+name: Fix Rakuten Links (past posts)
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "お試しモード（trueなら記事を変更しない）"
+        type: boolean
+        default: true
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run fix
+        run: python fix_rakuten_links.py
+        env:
+          EQ_WP_URL: ${{ secrets.EQ_WP_URL }}
+          EQ_WP_USER: ${{ secrets.EQ_WP_USER }}
+          EQ_WP_PASSWORD: ${{ secrets.EQ_WP_PASSWORD }}
+          DRY_RUN: ${{ inputs.dry_run }}
